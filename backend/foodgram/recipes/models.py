@@ -86,6 +86,11 @@ class Receipe(models.Model):
         verbose_name='Время приготовления (в минутах)',
         validators=[MinValueValidator(1)]
     )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+        db_index=True
+    )
 
     def __str__(self):
         return self.name
@@ -93,6 +98,7 @@ class Receipe(models.Model):
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        ordering = ('-pub_date', )
 
 
 class IngredientInRecipe(models.Model):

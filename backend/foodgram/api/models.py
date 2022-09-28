@@ -69,6 +69,6 @@ class ShoppingChart(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_shopping_chart'
+                fields=['user', 'receipe'], name='unique_shopping_chart'
             )
         ]
