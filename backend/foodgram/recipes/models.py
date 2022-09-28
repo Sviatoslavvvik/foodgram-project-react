@@ -67,12 +67,13 @@ class Receipe(models.Model):
     )
     image = models.ImageField(
         verbose_name='Картинка',
-        upload_to='recipes/'
+        upload_to='recipes/',
     )
     text = models.TextField(
         verbose_name='Текстовое описание',
     )
     ingredients = models.ManyToManyField(
+        Ingridient,
         verbose_name='Список ингредиентов',
         through='IngredientInRecipe',
     )
