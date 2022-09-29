@@ -35,7 +35,6 @@ class Tag(models.Model):
 class Ingridient(models.Model):
     """Модель ингридиента"""
     name = models.CharField(
-        unique=True,
         verbose_name='Название',
         db_index=True,
         max_length=200,
@@ -51,6 +50,12 @@ class Ingridient(models.Model):
     class Meta:
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_name_measurement_unit'
+            )
+        ]
 
 
 class Receipe(models.Model):

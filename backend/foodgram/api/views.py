@@ -1,3 +1,14 @@
-from django.shortcuts import render
+from recipes.models import Ingridient, Tag
+from rest_framework import viewsets
 
-# Create your views here.
+from .serializers import IngridientSerializer, TagSerializer
+
+
+class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingridient.objects.all()
+    serializer_class = IngridientSerializer
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
