@@ -5,32 +5,6 @@ from recipes.models import Receipe
 User = get_user_model()
 
 
-class Subscription(models.Model):
-    """Модель подписки на авторов"""
-    user = models.ForeignKey(User,
-                             on_delete=models.CASCADE,
-                             related_name='follower',
-                             verbose_name='Пользователь',
-                             )
-    author = models.ForeignKey(User,
-                               on_delete=models.CASCADE,
-                               related_name='following',
-                               verbose_name='Автор',
-                               )
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=~models.Q(
-                    user=models.F('author')
-                ), name='user=author'),
-            models.UniqueConstraint(
-                fields=['user', 'author'],
-                name='users follow on uniq authors'
-            )
-        ]
-
-
 class Favorite(models.Model):
     """Модель избранных рецептов"""
     user = models.ForeignKey(User,
