@@ -1,5 +1,6 @@
 import os
 
+import djoser
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,6 +21,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
+    'djoser',
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
     'api.apps.ApiConfig',
@@ -81,6 +84,25 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'SERIALIZERS': {'user': 'users.serializers.UserProfileSerializer',
+                    'user_create': 'users.serializers.SignUpSerializer',
+                    'current_user': 'users.serializers.UserProfileSerializer',
+                    },
+    'PERMISSIONS': {'user_delete': ['rest_framework.permissions.IsAdminUser'],
+                    'user': ['rest_framework.permissions.AllowAny'],
+                    'user_list': ['rest_framework.permissions.AllowAny'],
+                    }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
 
 LANGUAGE_CODE = 'ru'
 
