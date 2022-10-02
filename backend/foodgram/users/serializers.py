@@ -1,4 +1,3 @@
-import djoser.serializers
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -18,7 +17,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user = request.user
         if user.is_anonymous:
             return False
-        return user.following.filter(author=obj).exists()
+        return user.follower.filter(author=obj).exists()
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -57,25 +56,37 @@ class SignUpSerializer(serializers.ModelSerializer):
         return user
 
 
-class SetPasswordSerializer(djoser.serializers.PasswordSerializer):
+class SetPasswordSerializer(serializers.ModelSerializer):
     """Сериализатор изменения пароля"""
     current_password = serializers.CharField(
         source='password',
         style={"input_type": "password"},
         required=True
     )
-    new_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, source='password',
+                                         style={"input_type": "password"})
 
     class Meta:
         model = User
         fields = ('current_password', 'new_password')
-        read_only_fields = ('email', 'username', 'first_name', 'last_name',)
         extra_kwargs = {'current_password': {'write_only': True}}
 
     def validate(self, data):
-        user = self.context["request"].user
-        data = super().validate(data)
-        if data["current_password"] == user.password:
+        """Проверяем, пользователя по старому паролю
+         новый пароль не может быть равен старому".
+         """
+        user = self.context.get("request").user
+
+        if user.check_password(self.initial_data.get('new_password')):
+            raise serializers.ValidationError('Новый пароль не должен'
+                                              ' быть равным старому')
+
+        if user.check_password(self.context.get('current_password')):
             return data
         else:
             raise serializers.ValidationError('Неверно указан текущий пароль')
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data['password'])
+        instance.save()
+        return instance

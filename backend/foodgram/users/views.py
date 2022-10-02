@@ -23,6 +23,11 @@ class UserViewSet(CreateListRetrieveViewSet):
             return SetPasswordSerializer
         return UserProfileSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['current_password'] = self.request.data.get('current_password')
+        return context
+
     @action(
         detail=False,
         methods=['get'],
@@ -38,8 +43,8 @@ class UserViewSet(CreateListRetrieveViewSet):
         permission_classes=(IsAuthenticated, )
      )
     def set_password(self, request):
-        serializer = self.get_serializer(self.request.user)
-        user = request.user
-        user.set_password(request.data['new_password'])
-        user.save()
+        serializer = self.get_serializer(data=self.request.data,
+                                         instance=self.request.user)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
