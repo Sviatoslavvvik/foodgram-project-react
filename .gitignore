@@ -130,3 +130,9 @@ dmypy.json
 
 # .idea
 .idea
+
+backend/foodgram/api/migrations/
+backend/foodgram/media/
+backend/foodgram/recipes/migrations/
+backend/foodgram/users/migrations/
+.inser_data.py

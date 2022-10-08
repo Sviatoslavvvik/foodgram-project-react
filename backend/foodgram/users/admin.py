@@ -3,6 +3,8 @@ from django.contrib.admin import site
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
+from .models import Subscription
+
 User = get_user_model()
 
 
@@ -13,3 +15,4 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 site.unregister(User)
 site.register(User, CustomUserAdmin)
+site.register(Subscription)

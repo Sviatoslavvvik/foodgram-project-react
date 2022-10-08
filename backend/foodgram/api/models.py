@@ -25,6 +25,8 @@ class Favorite(models.Model):
                 fields=['user', 'receipe'], name='uniq receips in favorites'
             )
         ]
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные'
 
 
 class ShoppingChart(models.Model):
@@ -46,3 +48,5 @@ class ShoppingChart(models.Model):
                 fields=['user', 'receipe'], name='unique_shopping_chart'
             )
         ]
+        verbose_name = 'Покупка'
+        verbose_name_plural = 'Покупки'

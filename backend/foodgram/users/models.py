@@ -28,3 +28,5 @@ class Subscription(models.Model):
                 name='users follow on uniq authors'
             )
         ]
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'

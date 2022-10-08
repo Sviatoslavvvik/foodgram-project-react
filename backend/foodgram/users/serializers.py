@@ -1,10 +1,16 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from recipes.models import Receipe
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
+from .models import Subscription
 
 User = get_user_model()
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователя"""
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -13,11 +19,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
                   'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        user = request.user
+        user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return user.follower.filter(author=obj).exists()
+        return user.follower.filter(author_id=obj.id).exists()
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -63,13 +68,16 @@ class SetPasswordSerializer(serializers.ModelSerializer):
         style={"input_type": "password"},
         required=True
     )
-    new_password = serializers.CharField(required=True, source='password',
+    new_password = serializers.CharField(required=True,
                                          style={"input_type": "password"})
 
     class Meta:
         model = User
         fields = ('current_password', 'new_password')
-        extra_kwargs = {'current_password': {'write_only': True}}
+        extra_kwargs = {
+            'current_password': {'source': 'password', 'read_only': True},
+            'new_password': {'write_only': True}
+        }
 
     def validate(self, data):
         """Проверяем, пользователя по старому паролю
@@ -81,12 +89,96 @@ class SetPasswordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Новый пароль не должен'
                                               ' быть равным старому')
 
-        if user.check_password(self.context.get('current_password')):
+        if user.check_password(self.initial_data.get('current_password')):
             return data
         else:
             raise serializers.ValidationError('Неверно указан текущий пароль')
 
     def update(self, instance, validated_data):
-        instance.set_password(validated_data['password'])
+        instance.set_password(validated_data['new_password'])
         instance.save()
         return instance
+
+
+class RecipeShortDataSerializer(serializers.ModelSerializer):
+    """Сокращенный сериализатор
+    для отображения
+    """
+    class Meta:
+        model = Receipe
+        fields = (
+            'id', 'name', 'image', 'cooking_time')
+
+
+class SubscriptionsUserSerializer(serializers.ModelSerializer):
+    """Сериализатор подписок пользователя (чтение)"""
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count'
+        )
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
+        return user.follower.filter(author_id=obj.id).exists()
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        recipes_limit = request.query_params.get(
+            'recipes_limit'
+        ) or settings.RECIPE_AMOUNT_FOR_SUBCRIPTION
+        recipes = obj.recipes.all()[:recipes_limit]
+
+        return RecipeShortDataSerializer(
+            recipes, many=True,
+            context={'request': request}
+        ).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+
+class MakeSubscribeSerializer(serializers.ModelSerializer):
+    """Сериализатор подписки на запись"""
+
+    id = serializers.SlugRelatedField(
+        slug_field='id',
+        queryset=User.objects.all(),
+        source='author'
+    )
+    user = serializers.SlugRelatedField(
+        slug_field='id',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = Subscription
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=('id', 'user'),
+                message='Нельзя подписываться дважды!'
+            )
+        ]
+
+    def validate(self, data):
+        user = self.context.get("request").user
+        if user == data['id']:
+            raise serializers.ValidationError('Нельзя подписываться на себя!')
+        return data
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        return SubscriptionsUserSerializer(
+            instance,
+            context={'request': request}
+        ).data
