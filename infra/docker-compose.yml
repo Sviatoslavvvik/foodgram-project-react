@@ -8,9 +8,7 @@ services:
       - ./.env
   
   backend: 
-    build:
-      context: ../backend/foodgram
-      dockerfile: Dockerfile
+    image: svyatoslavvvik/foodgram:latest
     volumes:
       - data_value:/app/data/
       - static_value:/app/static/
@@ -22,9 +20,7 @@ services:
       - ./.env
   
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: svyatoslavvvik/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
