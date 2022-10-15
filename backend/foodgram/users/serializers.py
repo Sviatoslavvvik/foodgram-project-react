@@ -1,10 +1,10 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from recipes.models import Receipe
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .models import Subscription
+from .models import Subscription  # isort:skip
+from recipes.models import Receipe  # isort:skip
 
 User = get_user_model()
 
@@ -32,7 +32,11 @@ class SignUpSerializer(serializers.ModelSerializer):
         fields = ('email', 'username', 'first_name', 'last_name',
                   'password')
         model = User
-        extra_kwargs = {'password': {'write_only': True}}
+        extra_kwargs = {'password': {'write_only': True},
+                        'username': {'required': False},
+                        'first_name': {'required': False},
+                        'last_name': {'required': False}
+                        }
 
     def validate(self, data):
         """Проверяем, что нельзя создать пользователя
@@ -54,7 +58,9 @@ class SignUpSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User(
             email=validated_data['email'],
-            username=validated_data['username']
+            username=validated_data['username'],
+            first_name=validated_data.get('first_name'),
+            last_name=validated_data.get('last_name')
         )
         user.set_password(validated_data['password'])
         user.save()
@@ -131,10 +137,14 @@ class SubscriptionsUserSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         request = self.context.get('request')
-        recipes_limit = request.query_params.get(
+        recipes_limit_string = request.query_params.get(
             'recipes_limit'
-        ) or settings.RECIPE_AMOUNT_FOR_SUBCRIPTION
-        recipes = obj.recipes.all()[:recipes_limit]
+        )
+        if recipes_limit_string:
+            recipes_limit = int(recipes_limit_string)
+        else:
+            recipes_limit = settings.RECIPE_AMOUNT_FOR_SUBCRIPTION
+        recipes = obj.recipes.all().order_by('-pub_date')[:recipes_limit]
 
         return RecipeShortDataSerializer(
             recipes, many=True,
@@ -171,8 +181,8 @@ class MakeSubscribeSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        user = self.context.get("request").user
-        if user == data['id']:
+        user = self.context.get('request').user
+        if user == data.get('id'):
             raise serializers.ValidationError('Нельзя подписываться на себя!')
         return data
 

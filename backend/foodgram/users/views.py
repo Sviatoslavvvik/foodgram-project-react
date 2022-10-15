@@ -1,23 +1,29 @@
-from api.custom_paginator import CustomPagination
-from api.custom_viewset import CreateListRetrieveViewSet
 from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Subscription
-from .serializers import (MakeSubscribeSerializer, SetPasswordSerializer,
+from core.custom_paginator import CustomPagination  # isort:skip
+from core.custom_viewset import CreateListRetrieveViewSet  # isort:skip
+# from core.custom_filters import ReceipSubscriptionsFilter  # isort:skip
+from .models import Subscription  # isort:skip
+from .serializers import (MakeSubscribeSerializer,  # isort:skip
+                          SetPasswordSerializer,
                           SignUpSerializer, SubscriptionsUserSerializer,
-                          UserProfileSerializer)
+                          UserProfileSerializer)  # isort:skip
+
 
 User = get_user_model()
 
 
 class UserViewSet(CreateListRetrieveViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('email')
     serializer_class = UserProfileSerializer
     pagination_class = CustomPagination
+    permission_classes = (AllowAny,)
+    filter_backends = (DjangoFilterBackend,)
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -79,10 +85,15 @@ class UserViewSet(CreateListRetrieveViewSet):
         detail=False,
         methods=("GET",),
         permission_classes=(IsAuthenticated,),
+        pagination_class=CustomPagination,
     )
     def subscriptions(self, request):
         user = request.user
         new_queryset = User.objects.filter(following__user=user)
+        page = self.paginate_queryset(new_queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = SubscriptionsUserSerializer(
             new_queryset, many=True, context={'request': request}
         )

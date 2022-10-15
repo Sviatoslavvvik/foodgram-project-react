@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import (MaxValueValidator, MinValueValidator,
+                                    RegexValidator)
 from django.db import models
 
 User = get_user_model()
@@ -8,54 +9,58 @@ User = get_user_model()
 class Tag(models.Model):
     """Модель тэга"""
     name = models.CharField(
-        verbose_name='Название тега',
+        'Название тега',
         db_index=True,
         unique=True,
         max_length=200,
     )
     color = models.CharField(
-        verbose_name='Цветовой HEX-код',
+        'Цветовой HEX-код',
         max_length=7,
         unique=True,
+        validators=[
+            RegexValidator(r'^#(?:[0-9a-fA-F]{3}){1,2}$',
+                           message='Цвет не в формате Hex')
+        ]
     )
     slug = models.SlugField(
-        verbose_name='Slug',
+        'Slug',
         unique=True,
         max_length=200,
     )
-
-    def __str__(self):
-        return self.name
 
     class Meta:
         verbose_name = 'Tag'
         verbose_name_plural = 'Tags'
 
+    def __str__(self):
+        return self.name
 
-class Ingridient(models.Model):
-    """Модель ингридиента"""
+
+class Ingredient(models.Model):
+    """Модель ингредиента"""
     name = models.CharField(
-        verbose_name='Название',
+        'Название',
         db_index=True,
         max_length=200,
     )
     measurement_unit = models.CharField(
-        verbose_name='Единица измерения',
+        'Единица измерения',
         max_length=200,
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
-        verbose_name = 'Ингридиент'
-        verbose_name_plural = 'Ингридиенты'
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
         constraints = [
             models.UniqueConstraint(
                 fields=('name', 'measurement_unit'),
                 name='unique_name_measurement_unit'
             )
         ]
+
+    def __str__(self):
+        return self.name
 
 
 class Receipe(models.Model):
@@ -76,9 +81,10 @@ class Receipe(models.Model):
     )
     text = models.TextField(
         verbose_name='Текстовое описание',
+        max_length=2000,
     )
     ingredients = models.ManyToManyField(
-        Ingridient,
+        Ingredient,
         verbose_name='Список ингредиентов',
         through='IngredientInRecipe',
     )
@@ -89,7 +95,7 @@ class Receipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления (в минутах)',
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(1), MaxValueValidator(60*5)]
     )
     pub_date = models.DateTimeField(
         'Дата публикации',
@@ -97,13 +103,13 @@ class Receipe(models.Model):
         db_index=True
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         ordering = ('-pub_date', )
+
+    def __str__(self):
+        return self.name
 
 
 class IngredientInRecipe(models.Model):
@@ -111,21 +117,22 @@ class IngredientInRecipe(models.Model):
     receipe = models.ForeignKey(
         Receipe,
         on_delete=models.CASCADE,
-        related_name='ingridients_amounts',
+        related_name='ingredients_amounts',
     )
-    ingridient = models.ForeignKey(
-        Ingridient,
+    ingredient = models.ForeignKey(
+        Ingredient,
         on_delete=models.CASCADE,
     )
-    amount = models.PositiveIntegerField(
+    amount = models.DecimalField(
+        max_digits=4, decimal_places=1,
         verbose_name='Количество',
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(0.1), MaxValueValidator(4999.99)]
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=('ingridient', 'receipe'),
+                fields=('ingredient', 'receipe'),
                 name='unique_recipe_ingredient'
             )
         ]

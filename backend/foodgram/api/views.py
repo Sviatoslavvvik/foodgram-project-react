@@ -2,26 +2,30 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import IngredientInRecipe, Ingridient, Receipe, Tag
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from users.serializers import RecipeShortDataSerializer
 
-from .custom_filters import IngredientFilter, RecipeFilter
-from .custom_paginator import CustomPagination
-from .custom_permission import AuthorChangePermission
-from .models import Favorite, ShoppingChart
-from .serializers import (IngridientSerializer, ReceipeSerializer,
-                          RecipeWriteSerializer, TagSerializer)
+from core.custom_filters import IngredientFilter, RecipeFilter  # isort:skip
+from core.custom_paginator import CustomPagination  # isort:skip
+from core.custom_permission import (AuthorChangePermission,  # isort:skip
+                                    UserDeletePermission)  # isort:skip
+from .models import Favorite, ShoppingChart  # isort:skip
+from .serializers import (IngredientSerializer,  # isort:skip
+                          ReceipeSerializer,
+                          RecipeWriteSerializer,  # isort:skip
+                          TagSerializer)  # isort:skip
+from users.serializers import RecipeShortDataSerializer  # isort:skip
+from recipes.models import (Ingredient,  # isort:skip
+                            IngredientInRecipe, Receipe, Tag)  # isort:skip
 
 User = get_user_model()
 
 
 class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Ingridient.objects.all()
-    serializer_class = IngridientSerializer
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
     pagination_class = None
     filter_backends = (
         DjangoFilterBackend,
@@ -53,6 +57,10 @@ class ReceipeViewSet(viewsets.ModelViewSet):
         return ReceipeSerializer
 
     def get_permissions(self):
+        if self.request.method == 'DELETE' and (
+            self.action == 'favorite' or self.action == 'shopping_cart'
+        ):
+            return (UserDeletePermission(),)
         if self.request.method in ('PATCH', 'DELETE'):
             return (AuthorChangePermission(),)
         return super().get_permissions()
@@ -110,8 +118,8 @@ class ReceipeViewSet(viewsets.ModelViewSet):
             receipe__shopping_chart_receip__user=user
         )
         queryset = in_cart.values_list(
-            "ingridient__name",
-            "ingridient__measurement_unit"
+            "ingredient__name",
+            "ingredient__measurement_unit"
         ).annotate(
             amount_sum=Sum(
                 "amount"

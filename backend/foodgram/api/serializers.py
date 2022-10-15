@@ -2,34 +2,39 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from recipes.models import IngredientInRecipe, Ingridient, Receipe, Tag
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from users.serializers import UserProfileSerializer
+
+from users.serializers import UserProfileSerializer  # isort:skip
+from recipes.models import (IngredientInRecipe, Ingredient,  # isort:skip
+                            Receipe, Tag)  # isort:skip
 
 User = get_user_model()
 
 
-class IngridientSerializer(serializers.ModelSerializer):
+class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор ингредиента"""
     class Meta:
         fields = '__all__'
-        model = Ingridient
+        model = Ingredient
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор тэга"""
     class Meta:
         fields = '__all__'
         model = Tag
 
 
-class IngridientInRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор количества ингридиентов в рецепте"""
-    id = serializers.PrimaryKeyRelatedField(source='ingridient',
+class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор количества ингредиентов в рецепте"""
+    id = serializers.PrimaryKeyRelatedField(source='ingredient',
                                             read_only=True)
-    name = serializers.SlugRelatedField(source='ingridient',
+    name = serializers.SlugRelatedField(source='ingredient',
                                         slug_field='name',
                                         read_only=True)
     measurment_unit = serializers.SlugRelatedField(
-        source='ingridient',
+        source='ingredient',
         slug_field='measurement_unit',
         read_only=True
     )
@@ -48,9 +53,9 @@ class ReceipeSerializer(serializers.ModelSerializer):
     """Сериализатор рецепта на чтение"""
     tags = TagSerializer(many=True, read_only=True)
     author = UserProfileSerializer(read_only=True)
-    ingredients = IngridientInRecipeSerializer(
+    ingredients = IngredientInRecipeSerializer(
         many=True,
-        source='ingridients_amounts',
+        source='ingredients_amounts',
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -63,6 +68,7 @@ class ReceipeSerializer(serializers.ModelSerializer):
         )
 
     def get_user_from_request(self):
+        """Получить пользователя из запроса"""
         request = self.context.get('request')
         return request, request.user
 
@@ -79,10 +85,10 @@ class ReceipeSerializer(serializers.ModelSerializer):
         return user.shopping_chart.filter(receipe=obj).exists()
 
 
-class IngridientAmountWriteSerializer(serializers.ModelSerializer):
-    """Сериализатор ингридиента на запись"""
+class IngredientAmountWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор ингредиента на запись"""
     id = serializers.PrimaryKeyRelatedField(source='ingredient',
-                                            queryset=Ingridient.objects.all())
+                                            queryset=Ingredient.objects.all())
     amount = serializers.IntegerField()
 
     class Meta:
@@ -99,6 +105,8 @@ class IngridientAmountWriteSerializer(serializers.ModelSerializer):
 
 
 class Base64ImageField(serializers.ImageField):
+    """Декодирование картинки от фронта
+    формат base64"""
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -109,7 +117,7 @@ class Base64ImageField(serializers.ImageField):
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Сериализатор рецепта на запись"""
-    ingredients = IngridientAmountWriteSerializer(many=True)
+    ingredients = IngredientAmountWriteSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()
@@ -124,13 +132,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def create_bulk(self, recipe, ingredients_data):
+        """Добавление списка ингредиетов"""
         IngredientInRecipe.objects.bulk_create([IngredientInRecipe(
-            ingridient=ingredient.get('ingredient'),
+            ingredient=ingredient.get('ingredient'),
             receipe=recipe,
             amount=ingredient.get('amount')
         ) for ingredient in ingredients_data])
 
     def create(self, validated_data):
+        """Создание рецепта"""
         request = self.context.get('request')
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
@@ -141,26 +151,34 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        """Обновление рецепта"""
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         instance.tags.clear()
         instance.tags.set(tags_data)
         IngredientInRecipe.objects.filter(receipe=instance).delete()
         self.create_bulk(instance, ingredients_data)
-        instance.save()
+        super().update(instance, validated_data)
         return instance
 
-    def validate(self, data):
+    def validate_ingredients(self, data):
         """Валидация ингредиентов и тэгов"""
         ingredients = []
-        for ingredient in data.get('ingredients'):
-            if ingredient.get('ingredient').id not in ingredients:
-                ingredients.append(ingredient.get('ingredient').id)
+        for ingredient in data:
+            ingredient_id = ingredient.get('ingredient').id
+            get_object_or_404(Ingredient, id=ingredient_id)
+            if ingredient_id not in ingredients:
+                ingredients.append(ingredient_id)
             else:
                 raise serializers.ValidationError(
                     'Ингредиенты не должны повторяться!')
+        return data
+
+    def validate_tags(self, data):
         tags = []
-        for tag in data.get('tags'):
+        for tag in data:
+            tag_id = tag.id
+            get_object_or_404(Tag, id=tag_id)
             if tag not in tags:
                 tags.append(tag)
             else:
@@ -174,7 +192,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         cooking_time = self.initial_data.get('cooking_time')
         if int(cooking_time) <= 0:
             raise serializers.ValidationError(
-                'Время приготовления должно быть больше 0'
+                'Время приготовления должно быть больше 1'
             )
         return data
 
