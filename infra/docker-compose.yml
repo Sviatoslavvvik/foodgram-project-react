@@ -20,6 +20,7 @@ services:
       - ./.env
   
   frontend:
+    # загружаем с образа
     image: svyatoslavvvik/foodgram_frontend
     volumes:
       - ../frontend/:/app/result_build/
