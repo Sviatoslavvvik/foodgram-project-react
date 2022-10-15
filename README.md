@@ -50,9 +50,15 @@ python manage.py runserver
 "подписки": "http://localhost/api/users/subscriptions/"
 ```
 ```
-"ингридиенты": "http://localhost/api/ingredients/"
+"ингредиенты": "http://localhost/api/ingredients/"
 ```
 ## Что использовалось при разработке:
 * Django
 * Django REST
 * Simple JWT
+* Docker
+* Python 3.7
+* nginx
+
+В сети:
+51.250.101.206
