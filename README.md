@@ -21,6 +21,9 @@ pip install -r requirements.txt
 ```
 Выполнить миграции:
 ```
+python manage.py makemigrations recipes
+```
+```
 python manage.py migrate
 ```
 Запустить проект:
