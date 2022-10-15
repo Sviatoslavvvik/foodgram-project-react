@@ -69,7 +69,7 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }} 
           script: | 
             sudo docker pull svyatoslavvvik/foodgram:latest
-            sudo docker pull svyatoslavvvik/foodgram_frontend:latest
+            sudo docker pull svyatoslavvvik/foodgram_frontend
             touch .env 
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env 
             echo DB_NAME=${{ secrets.DB_NAME }} >> .env 
