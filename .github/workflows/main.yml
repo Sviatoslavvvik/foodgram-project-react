@@ -68,8 +68,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }} 
           passphrase: ${{ secrets.PASSPHRASE }} 
           script: | 
-            sudo docker-compose stop 
-            sudo docker-compose rm backend 
             sudo docker pull svyatoslavvvik/foodgram:latest
             sudo docker pull svyatoslavvvik/foodgram_frontend:latest
             touch .env 
