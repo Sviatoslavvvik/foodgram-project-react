@@ -95,7 +95,7 @@ class Receipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления (в минутах)',
-        validators=[MinValueValidator(1), MaxValueValidator(60*5)]
+        validators=[MinValueValidator(1), MaxValueValidator(60 * 5)]
     )
     pub_date = models.DateTimeField(
         'Дата публикации',

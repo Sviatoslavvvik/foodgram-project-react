@@ -50,7 +50,7 @@ class UserViewSet(CreateListRetrieveViewSet):
         detail=False,
         methods=('POST',),
         permission_classes=(IsAuthenticated, )
-     )
+    )
     def set_password(self, request):
         serializer = self.get_serializer(data=self.request.data,
                                          instance=self.request.user)

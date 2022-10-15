@@ -33,5 +33,5 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING(
                     f'проверьте наличие файла {file_name} в {file_path}'
-                    )
                 )
+            )
