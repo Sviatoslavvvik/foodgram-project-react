@@ -24,7 +24,17 @@ pip install -r requirements.txt
 python manage.py makemigrations recipes
 ```
 ```
+python manage.py makemigrations api
+```
+```
+python manage.py makemigrations users
+```
+```
 python manage.py migrate
+```
+Загрузить ингредиенты:
+```
+python manage.py ingredients_import
 ```
 Запустить проект:
 ```
