@@ -56,7 +56,7 @@ jobs:
         with: 
           push: true 
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram 
-          context: ./foodgram 
+          context: ./backend/foodgram 
   deploy: 
     runs-on: ubuntu-latest
     steps: 
