@@ -1,4 +1,4 @@
-name: main-workflow
+name: MAIN-workflow
 
 on: [push]
 
