@@ -21,7 +21,7 @@ services:
   
   frontend:
     # загружаем с образа
-    image: svyatoslavvvik/foodgram_frontend
+    image: svyatoslavvvik/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
@@ -40,7 +40,6 @@ services:
     restart: always
     depends_on:
       - backend
-      - frontend
       - db
     
 
