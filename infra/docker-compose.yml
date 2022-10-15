@@ -20,7 +20,7 @@ services:
       - ./.env
   
   frontend:
-    image: svyatoslavvvik/foodgram_frontend:latest
+    image: svyatoslavvvik/foodgram_frontend
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
