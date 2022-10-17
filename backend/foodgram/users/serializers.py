@@ -3,7 +3,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .models import Subscription  # isort:skip
+from .models import Subscription
+
 from recipes.models import Receipe  # isort:skip
 
 User = get_user_model()

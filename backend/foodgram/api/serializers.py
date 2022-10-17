@@ -33,7 +33,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
     name = serializers.SlugRelatedField(source='ingredient',
                                         slug_field='name',
                                         read_only=True)
-    measurment_unit = serializers.SlugRelatedField(
+    measurement_unit = serializers.SlugRelatedField(
         source='ingredient',
         slug_field='measurement_unit',
         read_only=True
@@ -100,6 +100,10 @@ class IngredientAmountWriteSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError(
                 'Количество не может быть меньше нуля'
+            )
+        if value > 4999.99:
+            raise serializers.ValidationError(
+                'Введите количество < 4999,99'
             )
         return value
 
@@ -193,6 +197,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         if int(cooking_time) <= 0:
             raise serializers.ValidationError(
                 'Время приготовления должно быть больше 1'
+            )
+        if data > 60 * 5:
+            raise serializers.ValidationError(
+                'Введите время < 300'
             )
         return data
 
