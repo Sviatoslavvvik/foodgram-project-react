@@ -69,8 +69,8 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }} 
           script: | 
             sudo docker-compose stop
-            sudo docker-compose rm foodgram
-            sudo docker-compose rm foodgram_frontend
+            sudo docker-compose rm backend
+            sudo docker-compose rm frontend
             sudo docker pull svyatoslavvvik/foodgram:latest
             sudo docker pull svyatoslavvvik/foodgram_frontend
             touch .env 
